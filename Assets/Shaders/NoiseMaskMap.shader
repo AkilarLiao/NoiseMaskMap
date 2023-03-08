@@ -13,7 +13,6 @@ Shader "CustomURP/NoiseMaskMap"
         {   
             "Queue" = "Transparent"
         }
-        LOD 100
 
         Pass
         {

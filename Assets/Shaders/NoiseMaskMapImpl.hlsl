@@ -15,10 +15,12 @@ struct VertexOutput
     float2 noiseUV : TEXCOORD1;
 };
 
-sampler2D _MaskMap;
-float4 _MaskMap_ST;
-sampler2D _NoiseMap;
+TEXTURE2D(_MaskMap); SAMPLER(sampler_MaskMap);
+TEXTURE2D(_NoiseMap); SAMPLER(sampler_NoiseMap);
+
+CBUFFER_START(UnityPerMaterial)
 float4 _NoiseMap_ST;
+float4 _MaskMap_ST;
 half3 _FogColor;
 float _TexelSizeOffestRatio;
 //x contains 1.0 / width
@@ -26,6 +28,7 @@ float _TexelSizeOffestRatio;
 //z contains width
 //w contains height
 float4 _MaskMap_TexelSize;
+CBUFFER_END
 VertexOutput VertexProgram(VertexInput input)
 {
     VertexOutput output;
@@ -37,14 +40,13 @@ VertexOutput VertexProgram(VertexInput input)
 }
 
 half4 FragmentProgram(VertexOutput input) : SV_Target
-{
-    // sample the texture
-    half noiseRatio = 1.0 - tex2D(_NoiseMap, input.noiseUV).r;
+{   
+    half noiseRatio = 1.0 - SAMPLE_TEXTURE2D(_NoiseMap, sampler_MaskMap, input.noiseUV).r;
     noiseRatio = noiseRatio * 2.0 - 1.0;
 
     real2 noiseOffest = real2(
         noiseRatio * _MaskMap_TexelSize.x * _TexelSizeOffestRatio,
         (-noiseRatio) * _MaskMap_TexelSize.y * _TexelSizeOffestRatio);
-    return half4(_FogColor, 1.0 - tex2D(_MaskMap, input.baseUV + noiseOffest).r);
+    return half4(_FogColor, SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, input.baseUV + noiseOffest).r);
 }
 #endif //NOISE_MASK_MAP_IMPL_INCLUDED
